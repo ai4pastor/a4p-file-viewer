@@ -2678,6 +2678,7 @@ impl Controller {
 
     /// Right (→/l): expand the selected directory when the tree is focused, or scroll the
     /// content pane right when it is focused (so long unwrapped lines can be read).
+    /// A4P: on a **file** in the tree it opens the file like `Enter`, so → opens and ← goes back.
     fn expand(&mut self) -> Effects {
         if self.focus == Focus::Content {
             return self.scroll_content_h(HSCROLL_STEP as i32);
@@ -2691,6 +2692,14 @@ impl Controller {
             self.tree.expand(&node.path);
             return Effects::redraw();
         }
+        // A4P: 파일 위의 → 는 Enter 와 같이 파일을 크게 연다(← 로 목록에 돌아온다).
+        if self
+            .tree
+            .selected()
+            .is_some_and(|node| node.kind == NodeKind::File)
+        {
+            return self.activate();
+        }
         Effects::noop()
     }
 
@@ -2699,11 +2708,23 @@ impl Controller {
     /// directory instead walks to its nearest visible ancestor and collapses it. Changed-only and
     /// status trees keep their existing behavior because their directory rows are synthetic and
     /// always expanded.
+    /// A4P: in a preview already scrolled fully left, ← goes back to the file list instead of
+    /// doing nothing ([`back_to_tree`](Self::back_to_tree)).
     fn collapse(&mut self) -> Effects {
         if self.focus == Focus::Content {
+            // A4P: 가로로 밀려 있으면 먼저 왼쪽으로, 맨 왼쪽이면 목록으로 돌아간다.
+            if self.active_interaction.horizontal_scroll == 0 {
+                return self.back_to_tree();
+            }
             return self.scroll_content_h(-(HSCROLL_STEP as i32));
         }
         if self.focus == Focus::Pinned {
+            if self
+                .pinned_interaction()
+                .is_none_or(|interaction| interaction.horizontal_scroll == 0)
+            {
+                return self.back_to_tree();
+            }
             return self.scroll_pinned_h(-(HSCROLL_STEP as i32));
         }
         let Some(node) = self.tree.selected() else {
@@ -3136,6 +3157,17 @@ impl Controller {
         Effects::redraw()
     }
 
+    /// A4P: 파일 보기에서 목록으로 돌아간다(← 맨 왼쪽, Esc/q). 크게 보기(z·Z)를 풀고 목록에 초점을
+    /// 둔다. 고른 파일과 그 내용은 그대로라 다시 → / Enter 를 누르면 같은 파일이 열린다.
+    fn back_to_tree(&mut self) -> Effects {
+        if self.zoomed {
+            self.zoomed = false;
+            self.leave_host_zoom();
+        }
+        self.focus = Focus::Tree;
+        Effects::redraw()
+    }
+
     /// The close key (`q`/`Esc`): layered dismissal in order — clear a committed search first,
     /// then un-zoom if zoomed, then quit. So from a committed search the sequence is:
     /// Esc → clears the search; Esc again → un-zooms (if zoomed) or quits. (AC-20, owner UX.)
@@ -3161,6 +3193,10 @@ impl Controller {
             // was never used), so `Esc`/`q` never leaves the host pane full-screen behind a split.
             self.leave_host_zoom();
             return Effects::redraw();
+        }
+        // A4P: 파일 보기(내용 칸)에 있으면 닫기 전에 목록으로 먼저 돌아간다 — Esc 는 늘 "한 단계 뒤로".
+        if self.focus != Focus::Tree {
+            return self.back_to_tree();
         }
         // Annotations are session-only, so quitting destroys them. Confirm first rather than lose
         // work to a stray `q`. The outermost layer, after search/unzoom have had their turn.

@@ -12279,3 +12279,83 @@ fn close_all_is_a_noop_in_status_mode() {
     assert!(!fx.redraw);
     assert_eq!(visible_names(&ctrl), ["src", "x.rs"]);
 }
+
+// ---- A4P: → 로 열고 ← 로 목록에 돌아오기 ------------------------------------------------
+
+#[test]
+fn a4p_right_on_a_file_opens_it_like_enter() {
+    let dir = TempDir::new();
+    std::fs::write(dir.path().join("설교.md"), "# 제목\n").unwrap();
+    let (mut ctrl, _, _) = controller(dir.path(), false, StubGit::default(), false);
+    assert_eq!(ctrl.focus(), Focus::Tree);
+
+    let fx = ctrl.handle(Intent::Expand); // →
+    assert!(fx.redraw);
+    assert!(ctrl.zoomed(), "→ on a file opens it full-pane, like Enter");
+    assert_eq!(ctrl.focus(), Focus::Content);
+}
+
+#[test]
+fn a4p_right_on_a_directory_still_only_expands_it() {
+    let dir = TempDir::new();
+    std::fs::create_dir(dir.path().join("노트")).unwrap();
+    std::fs::write(dir.path().join("노트").join("설교.md"), "본문\n").unwrap();
+    let (mut ctrl, _, _) = controller(dir.path(), false, StubGit::default(), false);
+
+    ctrl.handle(Intent::Expand); // → on the folder
+    assert!(!ctrl.zoomed(), "a folder is expanded, not opened");
+    assert_eq!(ctrl.focus(), Focus::Tree);
+    assert_eq!(visible_names(&ctrl), ["노트", "설교.md"]);
+}
+
+#[test]
+fn a4p_left_in_an_opened_file_goes_back_to_the_list() {
+    let dir = TempDir::new();
+    std::fs::write(dir.path().join("a.md"), "1\n").unwrap();
+    std::fs::write(dir.path().join("b.md"), "2\n").unwrap();
+    let (mut ctrl, _, _) = controller(dir.path(), false, StubGit::default(), false);
+    ctrl.handle(Intent::NavDown); // b.md
+    ctrl.handle(Intent::Activate); // Enter opens it
+
+    let fx = ctrl.handle(Intent::Collapse); // ←
+    assert!(fx.redraw);
+    assert!(!fx.quit);
+    assert!(!ctrl.zoomed(), "← leaves the full-pane file");
+    assert_eq!(ctrl.focus(), Focus::Tree, "← returns to the list");
+    assert_eq!(ctrl.tree().cursor(), 1, "the file stays selected");
+}
+
+#[test]
+fn a4p_left_scrolls_a_sideways_scrolled_file_back_before_leaving_it() {
+    let dir = TempDir::new();
+    std::fs::write(dir.path().join("a.rs"), "1\n").unwrap();
+    let (mut ctrl, _, _) = controller(dir.path(), false, StubGit::default(), false);
+    ctrl.handle(Intent::Expand); // → opens the file
+    ctrl.active_interaction_mut().horizontal_scroll = 8;
+
+    ctrl.handle(Intent::Collapse); // ← while scrolled sideways
+    assert!(ctrl.zoomed(), "the first ← only scrolls left");
+    assert_eq!(ctrl.focus(), Focus::Content);
+    assert!(ctrl.active_interaction().horizontal_scroll < 8);
+
+    ctrl.active_interaction_mut().horizontal_scroll = 0;
+    ctrl.handle(Intent::Collapse); // ← at the left edge
+    assert!(!ctrl.zoomed());
+    assert_eq!(ctrl.focus(), Focus::Tree);
+}
+
+#[test]
+fn a4p_close_from_the_content_pane_goes_back_to_the_list_before_quitting() {
+    let dir = TempDir::new();
+    std::fs::write(dir.path().join("a.md"), "1\n").unwrap();
+    let (mut ctrl, _, _) = controller(dir.path(), false, StubGit::default(), false);
+    ctrl.handle(Intent::ToggleFocus); // Tab into the content pane (not zoomed)
+    assert_eq!(ctrl.focus(), Focus::Content);
+
+    let fx = ctrl.handle(Intent::Close); // Esc
+    assert!(!fx.quit, "Esc in the content pane goes back one step");
+    assert_eq!(ctrl.focus(), Focus::Tree);
+
+    let fx = ctrl.handle(Intent::Close); // Esc again
+    assert!(fx.quit, "Esc from the list closes the viewer");
+}

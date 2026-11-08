@@ -245,14 +245,16 @@ pub(crate) const REGISTRY: &[Binding] = &[
         intent: Intent::Expand,
         name: "expand",
         default_keys: &[KeyCode::Right, KeyCode::Char('l')],
-        description: "Expand the selected directory.",
+        // A4P: 파일 위에서는 파일을 연다.
+        description: "Expand the selected directory, or open the selected file.",
         category: "Navigation",
     },
     Binding {
         intent: Intent::Collapse,
         name: "collapse",
         default_keys: &[KeyCode::Left, KeyCode::Char('h')],
-        description: "Collapse a directory, or walk up from a file/collapsed directory.",
+        // A4P: 파일을 보는 중에는 목록으로 돌아간다.
+        description: "Collapse a directory, or walk up from a file/collapsed directory; in a file, go back to the list.",
         category: "Navigation",
     },
     Binding {
@@ -532,7 +534,8 @@ pub(crate) const REGISTRY: &[Binding] = &[
         intent: Intent::Close,
         name: "close",
         default_keys: &[KeyCode::Char('q'), KeyCode::Esc],
-        description: "Close the viewer and return to the prior pane.",
+        // A4P: 한 단계씩 뒤로 — 파일 → 목록 → 닫기.
+        description: "Go back one step (file → list), or close the viewer from the list.",
         category: "Session",
     },
 ];

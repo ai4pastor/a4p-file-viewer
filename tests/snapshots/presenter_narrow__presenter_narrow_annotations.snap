@@ -1,5 +1,6 @@
 ---
 source: tests/presenter_narrow.rs
+assertion_line: 245
 expression: out
 ---
 "┌main.rs─────────────────────────┐"
@@ -11,4 +12,4 @@ expression: out
 "││ src/file-10.rs:11 — narrow … ││"
 "││                              ││"
 "│└sc/q close────────────────────┘│"
-"└annotations: 12───────────? help┘"
+"└annotations: 12───────← 목록으로┘" Hidden by multi-width symbols: [(26, " "), (28, " "), (30, " "), (32, " ")]

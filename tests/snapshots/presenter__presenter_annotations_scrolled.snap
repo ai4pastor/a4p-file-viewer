@@ -1,5 +1,6 @@
 ---
 source: tests/presenter.rs
+assertion_line: 4499
 expression: out
 ---
 "┌r─────────────────────────────┐┌main.rs───────────────────────────────────────┐"
@@ -13,4 +14,4 @@ expression: out
 "│ │ src/file-21.rs:22 — note 21                                              │ │"
 "│ │                                                                          │ │"
 "│ └──↑↓/j/k move · Enter/e edit · d delete · D clear · y copy · Esc/q close──┘ │"
-"└──────────────────────────────┘└annotations: 24─────────────────────────? help┘"
+"└──────────────────────────────┘└annotations: 24───→ 열기 · Esc 닫기 · ? 도움말┘" Hidden by multi-width symbols: [(54, " "), (56, " "), (65, " "), (67, " "), (74, " "), (76, " "), (78, " ")]

@@ -489,7 +489,7 @@ impl RootPicker {
 /// Verified against herdr 0.9.1 (`herdr plugin pane open --help`, and live popup → tab and popup →
 /// split probes: from a popup, a split with no `--target-pane` lands beside the tiled pane the popup
 /// was opened over, and `--env` reaches the popup's own process):
-/// `plugin pane open --plugin herdr-file-viewer --entrypoint file-viewer --placement split
+/// `plugin pane open --plugin a4p-file-viewer --entrypoint file-viewer --placement split
 /// --direction <right|down> --focus --env HERDR_FILE_VIEWER_ROOT=<dir>`, or `--placement tab` with
 /// no `--direction`; a picked file adds `--env HERDR_FILE_VIEWER_OPEN=<file>` (absolute, under the
 /// root, which the launch open target accepts). No `--cwd`: the manifest's pane command is relative, so a foreign cwd would
@@ -508,7 +508,8 @@ pub fn open_args(target: &Target, placement: Placement) -> Result<Vec<String>, S
         "pane",
         "open",
         "--plugin",
-        "herdr-file-viewer",
+        // A4P: 고친 판의 플러그인 이름(원본 herdr-file-viewer 와 같이 깔려도 겹치지 않게)
+        "a4p-file-viewer",
         "--entrypoint",
         "file-viewer",
         "--placement",
@@ -1193,7 +1194,7 @@ mod tests {
                 "pane",
                 "open",
                 "--plugin",
-                "herdr-file-viewer",
+                "a4p-file-viewer",
                 "--entrypoint",
                 "file-viewer",
                 "--placement",
@@ -1225,7 +1226,7 @@ mod tests {
                     "pane",
                     "open",
                     "--plugin",
-                    "herdr-file-viewer",
+                    "a4p-file-viewer",
                     "--entrypoint",
                     "file-viewer",
                     "--placement",

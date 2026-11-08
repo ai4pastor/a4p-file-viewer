@@ -1,6 +1,7 @@
 ---
 source: tests/presenter_narrow.rs
-expression: "render(&state(60, Focus::Tree), 60, 20)"
+assertion_line: 176
+expression: "render(&state(Focus::Tree), 60, 20)"
 ---
 "┌r─────────────────────────────────────────────────────────┐"
 "│  ▾ src                                                   │"
@@ -21,4 +22,4 @@ expression: "render(&state(60, Focus::Tree), 60, 20)"
 "│                                                          │"
 "│                                                          │"
 "│                                                          │"
-"└──────────────────────────────────────────────────────────┘"
+"└──────────────────────────────→ 열기 · Esc 닫기 · ? 도움말┘" Hidden by multi-width symbols: [(34, " "), (36, " "), (45, " "), (47, " "), (54, " "), (56, " "), (58, " ")]

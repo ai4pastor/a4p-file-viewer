@@ -1006,7 +1006,9 @@ fn border_style(focused: bool) -> Style {
 }
 
 /// Draw the left column: the bordered file tree.
-fn draw_tree(frame: &mut Frame, area: Rect, state: &ViewState) {
+/// A4P: `show_hint` = 내용 칸이 그려지지 않을 때(좁은 칸에서 목록만 보일 때) 키 안내를 목록 아래
+/// 테두리에 띄운다.
+fn draw_tree(frame: &mut Frame, area: Rect, state: &ViewState, show_hint: bool) {
     // Top title = the root directory basename (mirroring how the content pane titles itself from
     // the selected node), sanitized (a repo dir name is untrusted, AC-27) and truncated to the
     // column so a long name can't break the border. Fall back to "Files" only when it is empty.
@@ -1022,10 +1024,24 @@ fn draw_tree(frame: &mut Frame, area: Rect, state: &ViewState) {
     // Bottom title = the current git branch, when in a repo on a real branch. Omitted entirely
     // (no `title_bottom`) outside a repo or on a detached HEAD, so the border degrades cleanly
     // rather than showing a blank/placeholder branch. Sanitized + truncated like the top title.
+    // A4P: 안내가 있으면 브랜치 이름은 남는 자리만큼만 쓴다(안내가 먼저).
+    let hint = show_hint
+        .then(|| a4p_hint_for(state.focus, area.width, 0))
+        .flatten();
+    let hint_width = hint.map_or(0, |text| Line::from(text).width() + 1) as u16;
     if let Some(branch) = &state.branch {
         // Middle-ellipsis (not tail) so a long branch keeps both its `prefix/` and trailing feature
         // name visible when the tree column is narrow.
-        block = block.title_bottom(truncate_middle(&sanitize_control(branch), area.width));
+        let branch = truncate_middle(
+            &sanitize_control(branch),
+            area.width.saturating_sub(hint_width),
+        );
+        if !branch.is_empty() {
+            block = block.title_bottom(branch);
+        }
+    }
+    if let Some(text) = hint {
+        block = block.title_bottom(Line::styled(text, Style::new().fg(Color::Reset)).right_aligned());
     }
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -1135,17 +1151,20 @@ fn draw_content(
     // Persistent bottom-border chips: annotation count on the left (only when nonzero and it
     // fits), help on the right. Both ride the border rather than consuming a content row. The
     // annotation chip deliberately names no key because ShowAnnotations is configurable.
-    let hint_text = sanitize_control(HELP_HINT);
-    let hint = Line::styled(hint_text.clone(), Style::new().fg(Color::Reset)).right_aligned();
+    // A4P: 오른쪽은 영어 `? help` 대신 초점에 맞는 한국어 키 안내. 개수 칩이 있으면 칩과 같이
+    // 들어가는 안내(짧은 것 포함)를 먼저 고르고, 그래도 안 되면 칩을 빼고 안내만 둔다.
     let annotation_chip = (active && state.annotation_count > 0)
         .then(|| sanitize_control(&format!("annotations: {}", state.annotation_count)));
-    let chip_fits = annotation_chip.as_ref().is_some_and(|chip| {
-        Line::from(chip.as_str()).width() + 1 + Line::from(hint_text.as_str()).width()
-            <= area.width.saturating_sub(2) as usize
+    let hint_with_chip = annotation_chip.as_ref().and_then(|chip| {
+        a4p_hint_for(state.focus, area.width, Line::from(chip.as_str()).width() + 1)
     });
+    let chip_fits = hint_with_chip.is_some();
+    let hint_text = hint_with_chip
+        .or_else(|| a4p_hint_for(state.focus, area.width, 0))
+        .map(sanitize_control);
     let mut block = content_block(preview).title(title);
-    if active {
-        block = block.title_bottom(hint);
+    if active && let Some(text) = hint_text {
+        block = block.title_bottom(Line::styled(text, Style::new().fg(Color::Reset)).right_aligned());
     }
     if chip_fits {
         block = block.title_bottom(Line::styled(
@@ -1616,7 +1635,7 @@ pub fn draw(frame: &mut Frame, state: &ViewState) -> PreviewViewports {
         draw_prompt_line(frame, area, prompt);
     }
     if let Some(area) = layout.tree {
-        draw_tree(frame, area, state);
+        draw_tree(frame, area, state, layout.active.is_none());
     }
     let pinned_space_notice = pinned_space_notice(&layout, state);
     let pinned = match (layout.pinned, state.pinned.as_ref()) {
@@ -2012,11 +2031,26 @@ fn finder_query_line(finder: &FinderView) -> Line<'static> {
 
 /// The help overlay's top-left title (the box label).
 const HELP_TITLE: &str = "Help";
-/// The persistent discoverability hint shown on the content pane's bottom border — a
-/// right-aligned one-segment affordance that `?` opens help, visible on the default screen
-/// without opening any modal. Static (first-party), so no sanitization is needed
-/// beyond the defense-in-depth `sanitize_control` applied at the call site (AC-27).
-const HELP_HINT: &str = "? help";
+/// A4P: 화면 아래 테두리에 늘 보이는 한국어 키 안내(원본의 영어 `? help` 자리). 목록에 있을 때와
+/// 파일을 볼 때 할 일이 달라서 초점에 따라 바꾸고, 칸이 좁으면 뒤쪽(`? 도움말`)을 뺀다.
+/// 첫 후보가 들어가지 않으면 다음 후보를 쓴다.
+fn a4p_hints(focus: Focus) -> [&'static str; 2] {
+    match focus {
+        Focus::Tree => ["→ 열기 · Esc 닫기 · ? 도움말", "→ 열기 · Esc 닫기"],
+        Focus::Content | Focus::Pinned => ["← 목록으로 · ? 도움말", "← 목록으로"],
+    }
+}
+
+/// A4P: 바깥 너비 `area_width`(양쪽 테두리 포함)인 칸의 아래 테두리에서 `reserved` 칸을 빼고 남은
+/// 자리에 들어가는 가장 긴 안내. 하나도 안 들어가면 `None`.
+fn a4p_hint_for(focus: Focus, area_width: u16, reserved: usize) -> Option<&'static str> {
+    let budget = (area_width as usize)
+        .saturating_sub(2)
+        .saturating_sub(reserved);
+    a4p_hints(focus)
+        .into_iter()
+        .find(|hint| Line::from(*hint).width() <= budget)
+}
 /// The help overlay's desired interior WIDTH (columns) before clamping to the frame. A generous
 /// fixed size (the changelog/about bodies are unbounded — the box does NOT size to content like the
 /// finder; it clamps to the frame and the body scrolls).

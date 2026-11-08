@@ -525,6 +525,10 @@ fn close_from_pinned_focus_dismisses_the_visible_active_search_before_quitting()
         "dismissal does not unpin"
     );
 
+    // A4P: 미리보기에 초점이 있으면 닫기 전에 목록으로 먼저 돌아간다.
+    let fx = ctrl.handle(Intent::Close);
+    assert!(!fx.quit, "A4P: close from a preview goes back to the tree first");
+    assert_eq!(ctrl.focus(), Focus::Tree);
     let fx = ctrl.handle(Intent::Close);
     assert!(fx.quit, "with no search left, close quits");
 }
@@ -548,8 +552,10 @@ fn close_from_pinned_focus_quits_past_a_hidden_active_search() {
         pinned: Some((8, 4)),
     });
 
+    // A4P: 첫 닫기는 종료 대신 목록으로 돌아간다. 숨은 검색은 이 한 번에 쓰이지 않는다.
     let fx = ctrl.handle(Intent::Close);
-    assert!(fx.quit, "no visible search stands between close and quit");
+    assert!(!fx.quit, "A4P: close from a preview goes back to the tree first");
+    assert_eq!(ctrl.focus(), Focus::Tree);
     assert!(
         ctrl.active_interaction().search.is_some(),
         "the hidden active search was not consumed on the way out"
@@ -587,6 +593,10 @@ fn close_from_active_focus_dismisses_the_visible_pinned_search_before_quitting()
         "the visible pinned search was dismissed from active focus"
     );
 
+    // A4P: 미리보기에 초점이 있으면 닫기 전에 목록으로 먼저 돌아간다.
+    let fx = ctrl.handle(Intent::Close);
+    assert!(!fx.quit, "A4P: close from a preview goes back to the tree first");
+    assert_eq!(ctrl.focus(), Focus::Tree);
     let fx = ctrl.handle(Intent::Close);
     assert!(fx.quit, "with no search left, close quits");
 }

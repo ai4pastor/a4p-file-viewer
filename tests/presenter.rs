@@ -3801,15 +3801,16 @@ fn help_tab_rects_agree_with_drawn_tab_positions() {
 fn content_pane_shows_a_help_hint_on_its_bottom_border() {
     // The `? help` affordance rides the content block's bottom border so a new user discovers
     // the help overlay without opening it first. Visible on the default (file-selected) screen.
+    // A4P: 영어 `? help` 대신 한국어 키 안내(목록에 초점 → "→ 열기 · Esc 닫기 · ? 도움말").
     let out = render(&sample_state(), 100, 24);
     assert!(
-        out.contains("? help"),
-        "the '? help' hint must be visible on the content pane's bottom border\n{out}"
+        out.contains("? 도움말"),
+        "the '? 도움말' hint must be visible on the content pane's bottom border\n{out}"
     );
     // It sits on the LAST line (the content block's bottom border), not in the tree column.
     let last = out.lines().last().unwrap();
     assert!(
-        last.contains("? help"),
+        last.contains("→ 열기 · Esc 닫기 · ? 도움말"),
         "the hint is on the bottom border row\n{last}"
     );
 }
@@ -3819,7 +3820,7 @@ fn content_pane_shows_help_hint_even_when_a_file_is_loaded() {
     // Sanity: the hint is persistent, not only on an empty pane.
     let out = render(&sample_state(), 100, 24);
     assert!(out.contains("fn main()"), "a file is loaded\n{out}");
-    assert!(out.contains("? help"), "the hint is still shown\n{out}");
+    assert!(out.contains("? 도움말"), "the hint is still shown\n{out}");
 }
 
 #[test]
@@ -4584,7 +4585,7 @@ fn annotation_count_chip_is_nonzero_only_and_never_names_the_configurable_key() 
     let out = render(&state, 100, 12);
     let last = out.lines().last().unwrap();
     assert!(last.contains("annotations: 3"), "left chip shown\n{last}");
-    assert!(last.contains("? help"), "right help chip retained\n{last}");
+    assert!(last.contains("? 도움말"), "right help chip retained\n{last}");
     assert!(
         !last.contains('A'),
         "the configurable A key is not hardcoded\n{last}"
@@ -4598,7 +4599,8 @@ fn annotation_count_chip_is_omitted_when_it_would_overlap_help() {
     state.annotation_count = 1;
     let out = render(&state, 20, 8);
     let last = out.lines().last().unwrap();
-    assert!(last.contains("? help"), "help keeps precedence\n{last}");
+    // A4P: 좁으면 짧은 안내("← 목록으로")만 남는다.
+    assert!(last.contains("← 목록으로"), "help keeps precedence\n{last}");
     assert!(
         !last.contains("annotations:"),
         "the count chip is omitted rather than overlapping\n{last}"
@@ -4719,6 +4721,12 @@ fn quit_confirm_long_note_cannot_stretch_the_box() {
     let widest = out.lines().filter(|line| line.contains('\u{2502}')).count();
     assert!(widest > 0, "the dialog drew\n{out}");
     for line in out.lines() {
+        // A4P: 한글(2칸) 안내가 든 줄에는 시험용 화면이 " Hidden by multi-width symbols: …" 메모를
+        // 뒤에 붙인다. 화면 너비와 상관없는 메모라 떼고 잰다.
+        let line = line
+            .split(" Hidden by multi-width symbols")
+            .next()
+            .unwrap_or(line);
         assert!(
             line.chars().count() <= 102,
             "no row escapes the frame width\n{line}"

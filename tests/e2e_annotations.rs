@@ -221,6 +221,10 @@ fn live_file_range_overview_copy_clear_and_modal_isolation() {
         .expect("one uppercase D immediately clears all and keeps the overview visible");
 
     send_esc!(session);
+    // A4P: 내용 칸에 초점이 있으면 첫 q 는 목록으로 돌아가고, 두 번째 q 가 닫는다.
+    session
+        .send("q")
+        .expect("first q goes back to the tree from the content pane");
     session.send("q").expect("quit after closing the overview");
     session
         .expect(Eof)

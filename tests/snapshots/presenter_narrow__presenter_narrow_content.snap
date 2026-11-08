@@ -1,6 +1,7 @@
 ---
 source: tests/presenter_narrow.rs
-expression: "render(&state(60, Focus::Content), 60, 20)"
+assertion_line: 181
+expression: "render(&state(Focus::Content), 60, 20)"
 ---
 "┌main.rs───────────────────────────────────────────────────┐"
 "│delta not found — showing plain diff                      │"
@@ -21,4 +22,4 @@ expression: "render(&state(60, Focus::Content), 60, 20)"
 "│                                                          │"
 "│                                                          │"
 "│                                                          │"
-"└────────────────────────────────────────────────────? help┘"
+"└─────────────────────────────────────← 목록으로 · ? 도움말┘" Hidden by multi-width symbols: [(41, " "), (43, " "), (45, " "), (47, " "), (54, " "), (56, " "), (58, " ")]

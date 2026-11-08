@@ -316,9 +316,44 @@ fn narrow_content_border_suppresses_overlapping_annotation_chip() {
     st.annotation_count = 9;
     let out = render(&st, 20, 8);
     let last = out.lines().last().unwrap();
-    assert!(last.contains("? help"), "help remains discoverable\n{last}");
+    // A4P: 좁으면 짧은 안내("← 목록으로")만 남는다.
+    assert!(last.contains("← 목록으로"), "help remains discoverable\n{last}");
     assert!(
         !last.contains("annotations:"),
         "overlapping chip is omitted\n{last}"
+    );
+}
+
+// A4P: 좁은 칸에서 목록만 보일 때도 한국어 키 안내가 아래 테두리에 보이고, 아주 좁으면 짧은 안내만.
+#[test]
+fn a4p_korean_key_hint_follows_the_focus_and_the_width() {
+    let out = render(&state(Focus::Tree), 60, 20);
+    let last = out.lines().last().unwrap();
+    assert!(
+        last.contains("→ 열기 · Esc 닫기 · ? 도움말"),
+        "the tree-only screen shows how to open and close\n{last}"
+    );
+
+    let out = render(&state(Focus::Content), 60, 20);
+    let last = out.lines().last().unwrap();
+    assert!(
+        last.contains("← 목록으로"),
+        "a file shows how to go back to the list\n{last}"
+    );
+
+    let out = render(&state(Focus::Tree), 22, 8);
+    let last = out.lines().last().unwrap();
+    assert!(
+        last.contains("→ 열기 · Esc 닫기") && !last.contains("도움말"),
+        "a very narrow pane keeps the short hint\n{last}"
+    );
+
+    let mut st = state(Focus::Tree);
+    st.branch = Some("main".to_string());
+    let out = render(&st, 60, 20);
+    let last = out.lines().last().unwrap();
+    assert!(
+        last.contains("main") && last.contains("→ 열기"),
+        "the branch and the hint share the bottom border\n{last}"
     );
 }

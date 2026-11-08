@@ -22,10 +22,13 @@
 #    manifest pane's relative command is unspawnable there.
 #    No aarch64 Windows target is declared (v1 = x86_64-pc-windows-msvc).
 
-id = "herdr-file-viewer"
-name = "herdr-file-viewer"
-version = "1.18.0"
-description = "A git-aware, read-only file viewer: a keyboard-driven TUI in a herdr split pane."
+# A4P 파일 뷰어 — smarzban/herdr-file-viewer 1.18.0(MIT)을 고친 판.
+# 바꾼 것: → 로 파일 열기 · ← 로 목록에 돌아오기 · Esc 는 한 단계씩 뒤로(파일 → 목록 → 닫기) · 아래 테두리에 한국어 키 안내.
+# 버전 뒤 -a4p.N: 원본 릴리스 실행 파일을 잘못 내려받지 않게 (cargo로 소스에서 빌드)
+id = "a4p-file-viewer"
+name = "A4P 파일 뷰어"
+version = "1.18.0-a4p.1"
+description = "파일을 → 로 열고 ← 로 목록에 돌아오는 읽기 전용 파일 뷰어 (herdr 칸 옆에 열림)"
 min_herdr_version = "0.7.5"
 platforms = ["linux", "macos", "windows"]
 
@@ -87,7 +90,7 @@ description = "Open the git-aware file viewer in a split pane beside the current
 # reports, then run the .ps1 by absolute path.
 command = [
   "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-  '''$u=New-Object System.Text.UTF8Encoding($false); [Console]::OutputEncoding=$u; $OutputEncoding=$u; $b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'herdr-file-viewer'}).plugin_root; if($p -and $p.StartsWith('\\?\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'scripts') 'open-file-viewer.ps1')''',
+  '''$u=New-Object System.Text.UTF8Encoding($false); [Console]::OutputEncoding=$u; $OutputEncoding=$u; $b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'a4p-file-viewer'}).plugin_root; if($p -and $p.StartsWith('\\?\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'scripts') 'open-file-viewer.ps1')''',
 ]
 
 # The same viewer, opened in its own tab instead of a split. Idempotent across tabs: switches
@@ -108,7 +111,7 @@ description = "Open the git-aware file viewer in its own tab (switch to it if al
 # See open-file-viewer-windows: locate the launcher via herdr's own plugin root, not the cwd.
 command = [
   "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
-  '''$u=New-Object System.Text.UTF8Encoding($false); [Console]::OutputEncoding=$u; $OutputEncoding=$u; $b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'herdr-file-viewer'}).plugin_root; if($p -and $p.StartsWith('\\?\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'scripts') 'open-file-viewer-tab.ps1')''',
+  '''$u=New-Object System.Text.UTF8Encoding($false); [Console]::OutputEncoding=$u; $OutputEncoding=$u; $b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'a4p-file-viewer'}).plugin_root; if($p -and $p.StartsWith('\\?\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'scripts') 'open-file-viewer-tab.ps1')''',
 ]
 
 # Open the viewer at a directory you type (Tab completes, Enter opens, Esc cancels), instead of
