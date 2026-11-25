@@ -1041,7 +1041,8 @@ fn draw_tree(frame: &mut Frame, area: Rect, state: &ViewState, show_hint: bool) 
         }
     }
     if let Some(text) = hint {
-        block = block.title_bottom(Line::styled(text, Style::new().fg(Color::Reset)).right_aligned());
+        block =
+            block.title_bottom(Line::styled(text, Style::new().fg(Color::Reset)).right_aligned());
     }
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -1156,7 +1157,11 @@ fn draw_content(
     let annotation_chip = (active && state.annotation_count > 0)
         .then(|| sanitize_control(&format!("annotations: {}", state.annotation_count)));
     let hint_with_chip = annotation_chip.as_ref().and_then(|chip| {
-        a4p_hint_for(state.focus, area.width, Line::from(chip.as_str()).width() + 1)
+        a4p_hint_for(
+            state.focus,
+            area.width,
+            Line::from(chip.as_str()).width() + 1,
+        )
     });
     let chip_fits = hint_with_chip.is_some();
     let hint_text = hint_with_chip
@@ -1164,7 +1169,8 @@ fn draw_content(
         .map(sanitize_control);
     let mut block = content_block(preview).title(title);
     if active && let Some(text) = hint_text {
-        block = block.title_bottom(Line::styled(text, Style::new().fg(Color::Reset)).right_aligned());
+        block =
+            block.title_bottom(Line::styled(text, Style::new().fg(Color::Reset)).right_aligned());
     }
     if chip_fits {
         block = block.title_bottom(Line::styled(

@@ -317,7 +317,10 @@ fn narrow_content_border_suppresses_overlapping_annotation_chip() {
     let out = render(&st, 20, 8);
     let last = out.lines().last().unwrap();
     // A4P: 좁으면 짧은 안내("← 목록으로")만 남는다.
-    assert!(last.contains("← 목록으로"), "help remains discoverable\n{last}");
+    assert!(
+        last.contains("← 목록으로"),
+        "help remains discoverable\n{last}"
+    );
     assert!(
         !last.contains("annotations:"),
         "overlapping chip is omitted\n{last}"

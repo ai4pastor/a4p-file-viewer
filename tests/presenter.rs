@@ -4585,7 +4585,10 @@ fn annotation_count_chip_is_nonzero_only_and_never_names_the_configurable_key() 
     let out = render(&state, 100, 12);
     let last = out.lines().last().unwrap();
     assert!(last.contains("annotations: 3"), "left chip shown\n{last}");
-    assert!(last.contains("? 도움말"), "right help chip retained\n{last}");
+    assert!(
+        last.contains("? 도움말"),
+        "right help chip retained\n{last}"
+    );
     assert!(
         !last.contains('A'),
         "the configurable A key is not hardcoded\n{last}"

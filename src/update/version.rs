@@ -45,7 +45,10 @@ pub fn current() -> Version {
     // "never crash" invariant even for a hand-mangled version string.
     // A4P: 고친 판 버전(1.18.0-a4p.1)은 원본 1.18.0 을 바탕으로 한다 — 꼬리표를 떼고 비교해서,
     // 원본 1.18.0 이 "새 버전"으로 잘못 알려지지 않게 한다.
-    let base = env!("CARGO_PKG_VERSION").split('-').next().unwrap_or_default();
+    let base = env!("CARGO_PKG_VERSION")
+        .split('-')
+        .next()
+        .unwrap_or_default();
     Version::parse(base).unwrap_or(Version {
         major: 0,
         minor: 0,
